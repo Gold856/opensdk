@@ -53,14 +53,6 @@ CONFIGURE_GCC=(
     "--with-gxx-include-dir=${SYSROOT_PATH}/usr/include/c++/${V_GCC/.*/}"
 )
 
-if [ "${V_GCC/.*/}" -ge 10 ]; then
-    # ZSTD is a new dependency for GCC 10+ but is for LTO which
-    # we do not use.
-    CONFIGURE_GCC+=(
-        "--without-zstd"
-    )
-fi
-
 if [ "$TARGET_ARCH" ]; then
     CONFIGURE_GCC+=("--with-arch=${TARGET_ARCH}")
 fi

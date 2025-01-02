@@ -3,8 +3,9 @@
 ## Supported Languages
   * C
   * C++
-  * Fortran (roboRIO only)
+  * Fortran
     * To power the [RobotPy](https://github.com/robotpy) project
+    * To compile SuiteSparse for use in [wpical](https://github.com/wpilibsuite/allwpilib/tree/main/wpical)
 
 ## Supported Hosts
 

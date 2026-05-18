@@ -52,6 +52,8 @@ CONFIGURE_COMMON_LITE=(
     "--disable-nls"
     "--disable-werror"
     "--disable-multilib"
+    "--with-build-config=bootstrap-lto"
+    "--enable-lto"
 )
 
 CONFIGURE_COMMON=(

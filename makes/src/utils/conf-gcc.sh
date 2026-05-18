@@ -41,6 +41,8 @@ CONFIGURE_GCC=(
     "--disable-nls"
     "--disable-multilib"
     "--enable-multiarch"
+    "--with-build-config=bootstrap-lto"
+    "--enable-lto"
 
     "--libdir=${SYSROOT_PATH}/usr/lib"
     "--with-sysroot=${SYSROOT_PATH}"

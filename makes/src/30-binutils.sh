@@ -42,6 +42,7 @@ CONFIGURE_BINUTILS=(
     "--disable-multilib"                # Disable multilib for 64-bit targets
     "--with-zstd=no"
 
+    "--enable-lto"
     "--with-sysroot=${SYSROOT_PATH}"
 )
 

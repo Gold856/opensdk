@@ -31,6 +31,12 @@ function gcc_make_multi() {
         die "GCC install '$1'"
 }
 
+if [ "$CANADIAN_STAGE_ONE" != "true" ]; then
+    export CFLAGS="$CFLAGS -flto=auto"
+    export CXXFLAGS="$CXXFLAGS -flto=auto"
+    export LDFLAGS="$LDFLAGS -flto=auto"
+fi
+
 CONFIGURE_GCC=(
     "--build=${BUILD_TUPLE}"
     "--host=${HOST_TUPLE}"

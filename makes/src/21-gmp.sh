@@ -31,10 +31,15 @@ fi
 rm -rf "${BUILD_DIR}/gmp-build" "${BUILD_DIR}/gmp-install"
 mkdir "${BUILD_DIR}/gmp-build"
 
+if [ "${WPI_HOST_TUPLE}" = "x86_64-apple-darwin" ]; then
+    EXTRA_FLAGS="--disable-assembly"
+fi
+
 xcd "${BUILD_DIR}/gmp-build"
 process_background "Configuring GMP" \
     "$DOWNLOAD_DIR/gmp-${V_GMP}/configure" \
     "${CONFIGURE_COMMON_LITE[@]}" \
+    $EXTRA_FLAGS \
     --enable-static \
     --disable-shared ||
     die "GMP configure failed"
@@ -43,3 +48,4 @@ process_background "Building GMP" \
 process_background "Installing GMP" \
     make DESTDIR="${BUILD_DIR}/gmp-install" \
     install-strip || die "GMP install failed"
+find "${BUILD_DIR}/gmp-install" -name '*.la' -delete

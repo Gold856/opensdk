@@ -24,7 +24,28 @@ source "${ROOT_DIR}/consts.env"
 source "${ROOT_DIR}/targets/${TOOLCHAIN_NAME}/version.env"
 
 TREEIN_DIR="${BUILD_DIR}/tree-install/frc${V_YEAR}/"
-TREEOUT_TEMPLATE="${TARGET_PORT}-${TOOLCHAIN_NAME}-${V_YEAR}-${WPI_HOST_TUPLE}-Toolchain-${V_GCC}"
+TREEOUT_TEMPLATE="${TARGET_PORT}-${TOOLCHAIN_NAME}${SUFFIX}-${V_YEAR}-${WPI_HOST_TUPLE}-Toolchain-${V_GCC}"
+
+strip_toolchain() {
+    if [ -x "${STRIP}" ]; then
+        STRIP_CMD="${STRIP}"
+    elif [ -e "/usr/bin/llvm-strip" ]; then
+        # LLVM strip is architecture agnostic
+        STRIP_CMD="/usr/bin/llvm-strip"
+    elif [ -x "${TREEIN_DIR}/${TOOLCHAIN_NAME}/${TARGET_TUPLE}/bin/strip" ]; then
+        STRIP_CMD="${TREEIN_DIR}/${TOOLCHAIN_NAME}/${TARGET_TUPLE}/bin/strip"
+    else
+        warn "Cannot find proper strip command"
+    fi
+
+    SYSROOT="${TREEIN_DIR}/${TOOLCHAIN_NAME}/${TARGET_TUPLE}/sysroot"
+    for lib in ${SYSROOT}/lib64/* ${SYSROOT}/*/*/* ${SYSROOT}/usr/lib/*/*/*/*; do
+        if file "${lib}" | grep -qiF -e "elf "; then
+            "${STRIP_CMD}" -S "${lib}" || die "Could not strip ${lib}"
+        fi
+    done
+    TREEOUT_TEMPLATE="${TARGET_PORT}-${TOOLCHAIN_NAME}-${V_YEAR}-${WPI_HOST_TUPLE}-Toolchain-${V_GCC}"
+}
 
 nondeterministic() {
     if ! command -v strip-nondeterminism >/dev/null; then
@@ -35,13 +56,7 @@ nondeterministic() {
     strip-nondeterminism -T "$EPOCH" "$1"
 }
 
-archive_win() {
-    rm -f "${OUTPUT_DIR}/$TREEOUT_TEMPLATE.zip"
-    zip -r -9 "${OUTPUT_DIR}/$TREEOUT_TEMPLATE.zip" .
-    nondeterministic "${OUTPUT_DIR}/$TREEOUT_TEMPLATE.zip"
-}
-
-archive_nix() {
+_archive() {
     rm -f "${OUTPUT_DIR}/$TREEOUT_TEMPLATE.tgz"
     tar -cf "${OUTPUT_DIR}/$TREEOUT_TEMPLATE.tar" .
     nondeterministic "${OUTPUT_DIR}/$TREEOUT_TEMPLATE.tar"
@@ -51,11 +66,15 @@ archive_nix() {
 
 archive() {
     xcd "${TREEIN_DIR}"
-    if [ "${WPI_HOST_NAME}" = Windows ]; then
-        archive_win || return
-    else
-        archive_nix || return
+    echo "[INFO]: Archiving toolchain"
+    _archive || return
+    if [ "${TARGET_DISTRO}" != systemcore ]; then
+        return
     fi
+    echo "[INFO]: Stripping toolchain"
+    strip_toolchain
+    echo "[INFO]: Archiving stripped toolchain"
+    _archive || return
 }
 
 argparse() {
@@ -74,11 +93,7 @@ argparse() {
             exit
             ;;
         --print-pkg)
-            if [ "${WPI_HOST_NAME}" = Windows ]; then
-                echo "${TREEOUT_TEMPLATE}.zip"
-            else
-                echo "${TREEOUT_TEMPLATE}.tgz"
-            fi
+            echo "${TREEOUT_TEMPLATE}.tgz"
             exit
             ;;
         esac
